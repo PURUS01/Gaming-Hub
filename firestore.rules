@@ -1,0 +1,65 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ============================================
+    // Rooms Collection
+    // ============================================
+    // Manages multiplayer game rooms and real-time game state
+    match /rooms/{roomId} {
+      // Helper function: Check if the authenticated user is the room host
+      function isHost() {
+        return request.auth != null && 
+               resource.data.hostId == request.auth.uid;
+      }
+      
+      // Helper function: Check if the authenticated user is already a player in the room
+      function isPlayer() {
+        return request.auth != null && (
+          (resource.data.players.size() > 0 && request.auth.uid == resource.data.players[0].uid) ||
+          (resource.data.players.size() > 1 && request.auth.uid == resource.data.players[1].uid) ||
+          (resource.data.players.size() > 2 && request.auth.uid == resource.data.players[2].uid) ||
+          (resource.data.players.size() > 3 && request.auth.uid == resource.data.players[3].uid)
+        );
+      }
+      
+      // Helper function: Check if the authenticated user will be a player after update
+      function isNewPlayer() {
+        return request.auth != null && (
+          (request.resource.data.players.size() > 0 && request.auth.uid == request.resource.data.players[0].uid) ||
+          (request.resource.data.players.size() > 1 && request.auth.uid == request.resource.data.players[1].uid) ||
+          (request.resource.data.players.size() > 2 && request.auth.uid == request.resource.data.players[2].uid) ||
+          (request.resource.data.players.size() > 3 && request.auth.uid == request.resource.data.players[3].uid)
+        );
+      }
+      
+      // Helper function: Check if the authenticated user is joining the room
+      function isJoining() {
+        return request.auth != null &&
+               !isPlayer() &&  // Not already a player
+               isNewPlayer() &&  // But will be in new players array
+               request.resource.data.players.size() == resource.data.players.size() + 1 &&  // One more player
+               request.resource.data.players.size() <= resource.data.maxPlayers;  // Room not full
+      }
+      
+      // Read: Any authenticated user can read room data
+      allow read: if request.auth != null;
+      
+      // Create: Authenticated users can create rooms where they are the host
+      allow create: if request.auth != null 
+        && request.resource.data.hostId == request.auth.uid
+        && request.resource.data.players.size() > 0
+        && request.resource.data.players[0].uid == request.auth.uid;
+      
+      // Update: Users can update rooms if they are:
+      // 1. The host (for game moves, status updates)
+      // 2. Already a player (for game moves, status updates)
+      // 3. Joining the room (adding themselves to players)
+      allow update: if request.auth != null 
+        && (isHost() || isPlayer() || isJoining());
+      
+      // Delete: Only the host can delete/close the room
+      allow delete: if request.auth != null && isHost();
+    }
+  }
+}
