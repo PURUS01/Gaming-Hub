@@ -72,14 +72,14 @@ export default function HomePage() {
         </div>
 
         {!user && (
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-8 text-center">
-            <p className="text-blue-400 text-sm mb-2">
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 sm:p-4 mb-6 sm:mb-8 text-center">
+            <p className="text-blue-400 text-xs sm:text-sm mb-3 sm:mb-2">
               🔒 Sign in to play multiplayer games. All games require authentication to join rooms.
             </p>
-            <div className="flex gap-3 justify-center">
+            <div className="flex gap-2 sm:gap-3 justify-center">
               <Link
                 href="/login"
-                className="px-4 py-2 bg-gaming-purple hover:bg-gaming-purple/90 text-white rounded-lg text-sm font-medium transition-colors"
+                className="px-3 sm:px-4 py-2 bg-gaming-purple hover:bg-gaming-purple/90 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors"
               >
                 Login
               </Link>
@@ -88,10 +88,10 @@ export default function HomePage() {
         )}
 
         {featuredGames.length > 0 && (
-          <section className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-bold text-white">Featured Multiplayer Games</h2>
-              <Link href="/games" className="text-gaming-purple hover:underline text-sm">
+          <section className="mb-8 sm:mb-12">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Featured Multiplayer Games</h2>
+              <Link href="/games" className="text-gaming-purple hover:underline text-sm self-start sm:self-auto">
                 View All →
               </Link>
             </div>
@@ -99,10 +99,10 @@ export default function HomePage() {
           </section>
         )}
 
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-white">All Multiplayer Games</h2>
-            <Link href="/games" className="text-gaming-purple hover:underline text-sm">
+        <section className="mb-8 sm:mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">All Multiplayer Games</h2>
+            <Link href="/games" className="text-gaming-purple hover:underline text-sm self-start sm:self-auto">
               View All →
             </Link>
           </div>
@@ -115,10 +115,10 @@ export default function HomePage() {
           )}
         </section>
 
-        <section className="mb-12">
-          <div className="bg-gray-900 rounded-lg border border-gray-800 p-8">
-            <h2 className="text-2xl font-bold text-white mb-4">How It Works</h2>
-            <div className="grid md:grid-cols-3 gap-6">
+        <section className="mb-8 sm:mb-12">
+          <div className="bg-gray-900 rounded-lg border border-gray-800 p-4 sm:p-6 md:p-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">How It Works</h2>
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
               <div className="text-center">
                 <div className="w-12 h-12 bg-gaming-purple rounded-full flex items-center justify-center mx-auto mb-3">
                   <span className="text-2xl font-bold text-white">1</span>

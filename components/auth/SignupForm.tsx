@@ -40,10 +40,10 @@ export default function SignupForm() {
   };
 
   return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="bg-gray-900 border border-gray-800 rounded-lg p-8 max-w-md w-full">
-        <h2 className="text-2xl font-bold text-white mb-6 text-center">Sign Up</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="min-h-[60vh] flex items-center justify-center py-8">
+      <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6 md:p-8 max-w-md w-full mx-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6 text-center">Sign Up</h2>
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
               Email

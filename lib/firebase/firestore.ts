@@ -11,18 +11,66 @@ import {
   query,
   where,
   getDocs,
+  enableNetwork,
+  disableNetwork,
+  waitForPendingWrites,
 } from 'firebase/firestore';
 
 export { db };
 
-export const createRoom = async (roomId: string, gameId: string, hostId: string, hostName: string, hostEmail: string, maxPlayers: number, gameState: any = {}) => {
+// Helper function to ensure Firestore is online
+export const ensureFirestoreOnline = async (): Promise<void> => {
   if (!db) {
-    throw new Error('Firestore is not initialized');
+    throw new Error('Firestore not initialized');
   }
   
+  try {
+    // Enable network - this will connect Firestore to the server
+    await enableNetwork(db);
+    console.log('Firestore network enabled');
+  } catch (error: any) {
+    // If network is already enabled, this might throw - that's okay
+    if (error.message?.includes('already enabled') || error.code === 'failed-precondition') {
+      console.log('Firestore network already enabled');
+    } else {
+      console.warn('Could not enable Firestore network:', error);
+      // Don't throw - we'll try the operation anyway
+    }
+  }
+};
+
+export const createRoom = async (roomId: string, gameId: string, hostId: string, hostName: string, hostEmail: string, maxPlayers: number, gameState: any = {}) => {
+  // Comprehensive validation
+  if (!db) {
+    console.error('Firestore database is not initialized');
+    console.error('Check if Firebase environment variables are set correctly');
+    throw new Error('Firestore is not initialized. Please check your Firebase configuration and refresh the page.');
+  }
+  
+  // Ensure Firestore is online before attempting to create room
+  await ensureFirestoreOnline();
+  
+  if (!hostId || !gameId || !hostName) {
+    console.error('Missing required parameters:', { hostId: !!hostId, gameId: !!gameId, hostName: !!hostName });
+    throw new Error('Missing required information to create room.');
+  }
+  
+  if (!hostId || maxPlayers < 1) {
+    throw new Error('Invalid room configuration.');
+  }
+  
+  // Generate a unique room code
   const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
   
-  const roomData: Partial<GameRoom> = {
+  // Ensure players array structure matches Firestore rules exactly
+  const playersArray = [{
+    uid: hostId,
+    name: hostName,
+    email: hostEmail || '',
+    joinedAt: new Date().toISOString(),
+  }];
+  
+  const roomData = {
     id: roomId,
     gameId,
     hostId,
@@ -30,20 +78,156 @@ export const createRoom = async (roomId: string, gameId: string, hostId: string,
     roomCode,
     status: 'waiting',
     maxPlayers,
-    players: [{
-      uid: hostId,
-      name: hostName,
-      email: hostEmail,
-      joinedAt: new Date().toISOString(),
-    }],
-    gameState,
+    players: playersArray,
+    gameState: gameState || {},
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
   
-  const roomRef = doc(db, 'rooms', roomId);
-  await setDoc(roomRef, roomData);
-  return { id: roomId, ...roomData };
+  console.log('Creating room with data:', {
+    roomId,
+    gameId,
+    hostId,
+    hostName,
+    roomCode,
+    maxPlayers,
+    playersCount: playersArray.length,
+    firstPlayerUid: playersArray[0]?.uid,
+  });
+  
+  try {
+    const roomRef = doc(db, 'rooms', roomId);
+    
+    // Try with retries and longer timeout
+    let lastError: any = null;
+    const maxRetries = 2;
+    const timeoutMs = 15000; // Increased to 15 seconds
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      if (attempt > 0) {
+        console.log(`Retrying room creation (attempt ${attempt + 1}/${maxRetries + 1})...`);
+        // Wait a bit before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      try {
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            console.error(`Room creation timed out after ${timeoutMs}ms (attempt ${attempt + 1})`);
+            reject(new Error(`Room creation timed out after ${timeoutMs}ms. This might be due to Firestore security rules, network issues, or Firestore being unavailable.`));
+          }, timeoutMs);
+        });
+        
+        // Race between setDoc and timeout
+        await Promise.race([
+          setDoc(roomRef, roomData),
+          timeoutPromise
+        ]);
+        
+        // Wait for pending writes to complete
+        try {
+          await waitForPendingWrites(db);
+          console.log('All pending writes completed');
+        } catch (waitError) {
+          console.warn('Could not wait for pending writes:', waitError);
+        }
+        
+        console.log('Room created successfully:', roomId);
+        break; // Success, exit retry loop
+      } catch (attemptError: any) {
+        lastError = attemptError;
+        console.error(`Attempt ${attempt + 1} failed:`, attemptError);
+        
+        // If it's a permission error, don't retry
+        if (attemptError.code === 'permission-denied' || 
+            attemptError.code === 'unauthenticated' ||
+            attemptError.message?.includes('Permission denied')) {
+          throw attemptError;
+        }
+        
+        // If it's an offline error, try to enable network again
+        if (attemptError.message?.includes('offline') || 
+            attemptError.code === 'unavailable') {
+          console.log('Detected offline mode, attempting to enable network...');
+          try {
+            await enableNetwork(db);
+            console.log('Network re-enabled, will retry...');
+          } catch (networkError) {
+            console.warn('Could not re-enable network:', networkError);
+          }
+        }
+        
+        // If it's the last attempt, throw the error
+        if (attempt === maxRetries) {
+          throw attemptError;
+        }
+      }
+    }
+    
+    // Return room data without serverTimestamp (which is a placeholder)
+    return {
+      id: roomId,
+      gameId,
+      hostId,
+      hostName,
+      roomCode,
+      status: 'waiting' as const,
+      maxPlayers,
+      players: playersArray,
+      gameState: gameState || {},
+    } as GameRoom;
+  } catch (error: any) {
+    console.error('Error creating room - Full error:', {
+      code: error.code,
+      message: error.message,
+      stack: error.stack,
+    });
+    
+    // Provide more specific error messages
+    if (error.message?.includes('timed out')) {
+      console.error('Timeout error - Possible causes:');
+      console.error('1. Firestore security rules blocking the operation');
+      console.error('2. Network connectivity issues');
+      console.error('3. Firestore service unavailable');
+      console.error('4. Authentication token expired');
+      
+      throw new Error(
+        `Room creation timed out after multiple attempts. ` +
+        `Possible causes: Firestore security rules, network issues, or authentication problems. ` +
+        `Please check: 1) Your Firestore security rules allow room creation, 2) You are logged in, 3) Your internet connection is stable.`
+      );
+    }
+    if (error.code === 'permission-denied') {
+      console.error('Permission denied - Check Firestore security rules');
+      console.error('Current user:', { uid: hostId, email: hostEmail });
+      throw new Error(
+        'Permission denied by Firestore security rules. ' +
+        'Please verify: 1) You are authenticated, 2) Your Firestore rules allow creating rooms where you are the host, ' +
+        '3) The rules match the structure in firestore.rules file.'
+      );
+    }
+    if (error.code === 'unavailable' || error.message?.includes('offline')) {
+      console.error('Firestore offline error - attempting to enable network...');
+      try {
+        await enableNetwork(db);
+        throw new Error('Firestore was offline. Network has been enabled. Please try creating the room again.');
+      } catch (networkError) {
+        throw new Error('Firestore is offline or unavailable. Please check your internet connection, refresh the page, and try again.');
+      }
+    }
+    if (error.code === 'failed-precondition') {
+      throw new Error('Firestore operation failed due to a precondition error. Please try again.');
+    }
+    if (error.code === 'unauthenticated') {
+      throw new Error('You must be logged in to create a room. Please sign in and try again.');
+    }
+    if (error.code === 'deadline-exceeded') {
+      throw new Error('Firestore operation exceeded the deadline. This might indicate network issues or Firestore being slow. Please try again.');
+    }
+    
+    throw new Error(error.message || 'Failed to create room. Please try again.');
+  }
 };
 
 export const getRoom = async (roomId: string) => {

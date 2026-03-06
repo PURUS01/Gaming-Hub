@@ -106,14 +106,14 @@ export default function GameCard({ game, onFavoriteToggle }: GameCardProps) {
           </div>
         </div>
 
-        <div className="p-4">
-          <h3 className="text-lg font-bold text-white mb-1 group-hover:text-gaming-purple transition-colors">
+        <div className="p-3 sm:p-4">
+          <h3 className="text-base sm:text-lg font-bold text-white mb-1 group-hover:text-gaming-purple transition-colors">
             {game.title}
           </h3>
-          <p className="text-sm text-gray-400 mb-2 line-clamp-2">
+          <p className="text-xs sm:text-sm text-gray-400 mb-2 line-clamp-2">
             {game.shortDescription}
           </p>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-1 sm:gap-0">
             <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded">
               {game.category}
             </span>

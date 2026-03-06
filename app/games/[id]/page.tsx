@@ -30,7 +30,27 @@ export default function GameLobbyPage() {
   }, [params.id]);
 
   const handleCreateRoom = async () => {
-    if (!user || !game) return;
+    // Comprehensive validation before attempting to create room
+    if (!user) {
+      const errorMsg = 'You must be logged in to create a room.';
+      setError(errorMsg);
+      showError(errorMsg);
+      return;
+    }
+    
+    if (!game) {
+      const errorMsg = 'Game information is missing.';
+      setError(errorMsg);
+      showError(errorMsg);
+      return;
+    }
+    
+    if (!user.uid) {
+      const errorMsg = 'User authentication is incomplete. Please sign out and sign in again.';
+      setError(errorMsg);
+      showError(errorMsg);
+      return;
+    }
     
     setError('');
     setLoading(true);
@@ -38,6 +58,15 @@ export default function GameLobbyPage() {
     try {
       const roomId = `room_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       const hostName = user.displayName || user.email?.split('@')[0] || 'Player';
+      
+      console.log('Creating room...', { 
+        roomId, 
+        gameId: game.id, 
+        hostId: user.uid,
+        hostName,
+        maxPlayers: game.maxPlayers,
+        userEmail: user.email,
+      });
       
       const createdRoom = await createRoom(
         roomId,
@@ -49,6 +78,8 @@ export default function GameLobbyPage() {
         {}
       );
       
+      console.log('Room created successfully:', createdRoom);
+      
       showSuccess(`Room created successfully! Room code: ${createdRoom.roomCode}`, 4000);
       
       // Small delay to show toast before navigation
@@ -56,10 +87,10 @@ export default function GameLobbyPage() {
         router.push(`/games/${game.id}/room/${roomId}`);
       }, 500);
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to create room';
+      console.error('Error in handleCreateRoom:', err);
+      const errorMessage = err.message || 'Failed to create room. Please try again.';
       setError(errorMessage);
       showError(errorMessage);
-    } finally {
       setLoading(false);
     }
   };
@@ -135,21 +166,21 @@ export default function GameLobbyPage() {
             ← Back to games
           </Link>
 
-          <div className="relative h-48 md:h-64 rounded-lg overflow-hidden mb-8">
+          <div className="relative h-40 sm:h-48 md:h-64 rounded-lg overflow-hidden mb-6 sm:mb-8">
             <img
               src={game.banner}
               alt={game.title}
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4">
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{game.title}</h1>
-              <p className="text-gray-300">{game.shortDescription}</p>
+            <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2">{game.title}</h1>
+              <p className="text-xs sm:text-sm md:text-base text-gray-300">{game.shortDescription}</p>
             </div>
           </div>
 
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6 mb-4 sm:mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div>
                 <p className="text-gray-400 text-sm mb-1">Players</p>
                 <p className="text-white font-semibold">{game.minPlayers}-{game.maxPlayers} players</p>
@@ -167,42 +198,42 @@ export default function GameLobbyPage() {
                 <p className="text-white font-semibold capitalize">{game.status}</p>
               </div>
             </div>
-            <p className="text-gray-300 text-sm">{game.fullDescription}</p>
+            <p className="text-gray-300 text-xs sm:text-sm">{game.fullDescription}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Create Room</h3>
-              <p className="text-gray-400 text-sm mb-4">
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">Create Room</h3>
+              <p className="text-gray-400 text-xs sm:text-sm mb-4">
                 Create a new room and share the code with friends to play together.
               </p>
               <button
                 onClick={handleCreateRoom}
                 disabled={loading}
-                className="w-full bg-gaming-purple hover:bg-gaming-purple/90 text-white font-bold py-3 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gaming-purple hover:bg-gaming-purple/90 text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 {loading ? 'Creating...' : 'Create Room'}
               </button>
             </div>
 
-            <div className="bg-gray-900 border border-gray-800 rounded-lg p-6">
-              <h3 className="text-xl font-bold text-white mb-4">Join Room</h3>
-              <p className="text-gray-400 text-sm mb-4">
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">Join Room</h3>
+              <p className="text-gray-400 text-xs sm:text-sm mb-4">
                 Enter a room code to join an existing game.
               </p>
-              <div className="flex space-x-2">
+              <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2">
                 <input
                   type="text"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                   placeholder="Enter room code"
-                  className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gaming-purple"
+                  className="flex-1 px-3 sm:px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gaming-purple text-sm sm:text-base"
                   maxLength={6}
                 />
                 <button
                   onClick={handleJoinRoom}
                   disabled={!joinCode.trim() || loading}
-                  className="px-6 py-2 bg-gaming-blue hover:bg-gaming-blue/90 text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 sm:px-6 py-2 bg-gaming-blue hover:bg-gaming-blue/90 text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                 >
                   Join
                 </button>

@@ -220,13 +220,13 @@ export default function GameRoomPage() {
       
       <div className="min-h-screen bg-gaming-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <Link href={`/games/${params.id}`} className="text-gaming-purple hover:underline">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+            <Link href={`/games/${params.id}`} className="text-gaming-purple hover:underline text-sm sm:text-base">
               ← Back to lobby
             </Link>
             <button
               onClick={handleLeaveRoom}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
+              className="px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs sm:text-sm transition-colors w-full sm:w-auto"
             >
               Leave Room
             </button>
@@ -234,22 +234,22 @@ export default function GameRoomPage() {
 
           {/* Leave Room Confirmation Dialog */}
           {showLeaveConfirm && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-                <h3 className="text-xl font-bold text-white mb-4">Leave Room?</h3>
-                <p className="text-gray-300 mb-6">
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6 max-w-md w-full">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">Leave Room?</h3>
+                <p className="text-sm sm:text-base text-gray-300 mb-4 sm:mb-6">
                   Are you sure you want to leave? This will close the room for all players and end the game.
                 </p>
-                <div className="flex space-x-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:space-x-4">
                   <button
                     onClick={confirmLeaveRoom}
-                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors text-sm sm:text-base"
                   >
                     Yes, Leave
                   </button>
                   <button
                     onClick={cancelLeaveRoom}
-                    className="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors"
+                    className="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors text-sm sm:text-base"
                   >
                     Cancel
                   </button>

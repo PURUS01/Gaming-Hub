@@ -26,13 +26,31 @@ if (typeof window !== 'undefined') {
     firebaseConfig.appId;
 
   if (hasRequiredEnvVars) {
-    if (!getApps().length) {
-      app = initializeApp(firebaseConfig);
-    } else {
-      app = getApps()[0];
+    try {
+      if (!getApps().length) {
+        app = initializeApp(firebaseConfig);
+      } else {
+        app = getApps()[0];
+      }
+      auth = getAuth(app);
+      // Initialize Firestore without offline persistence to avoid offline mode issues
+      // This ensures Firestore always tries to connect to the server
+      db = getFirestore(app);
+      
+      // Ensure Firestore starts in online mode
+      // Note: We'll enable network in the firestore functions when needed
+    } catch (error) {
+      console.error('Firebase initialization error:', error);
     }
-    auth = getAuth(app);
-    db = getFirestore(app);
+  } else {
+    console.error('Firebase configuration missing. Required environment variables:', {
+      apiKey: !!firebaseConfig.apiKey,
+      authDomain: !!firebaseConfig.authDomain,
+      projectId: !!firebaseConfig.projectId,
+      storageBucket: !!firebaseConfig.storageBucket,
+      messagingSenderId: !!firebaseConfig.messagingSenderId,
+      appId: !!firebaseConfig.appId,
+    });
   }
 }
 

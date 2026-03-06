@@ -24,8 +24,8 @@ export default function FavoritesPage() {
 
   return (
     <div className="min-h-screen bg-gaming-dark">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-4xl font-bold text-white mb-8">My Favorites</h1>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-6 sm:mb-8">My Favorites</h1>
         
         {favoriteGames.length === 0 ? (
           <div className="text-center py-12 bg-gray-900 rounded-lg border border-gray-800">
