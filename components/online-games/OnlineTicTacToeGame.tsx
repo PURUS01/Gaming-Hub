@@ -206,7 +206,7 @@ export default function OnlineTicTacToeGame({ gameId, roomId }: OnlineTicTacToeG
 
   const winnerName = getWinnerName();
   const isUserWinner = winner?.winner === playerSymbol;
-  const isDraw = winner && !winner.winner;
+  const isDraw = !!(winner && !winner.winner);
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -227,7 +227,7 @@ export default function OnlineTicTacToeGame({ gameId, roomId }: OnlineTicTacToeG
         {winner ? (
           <div>
             <p className="text-2xl font-bold text-white">
-              {winner.winner ? `${winnerName} Wins!` : "It's a Draw!"}
+              {winner.winner ? `${winnerName} Wins!` : "It&apos;s a Draw!"}
             </p>
             {winner.winner && (
               <p className="text-sm text-gray-400 mt-1">

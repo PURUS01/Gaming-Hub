@@ -22,12 +22,12 @@ export default function OnlineRockPaperScissorsGame({ gameId, roomId }: OnlineRo
       <div className="bg-gray-900 border border-gray-800 rounded-lg p-12 text-center">
         <h3 className="text-2xl font-bold text-white mb-4">Online Rock Paper Scissors</h3>
         <p className="text-gray-400 mb-6">
-          This multiplayer game is coming soon. You'll be able to create or join rooms and play Rock Paper Scissors in real-time.
+          This multiplayer game is coming soon. You&apos;ll be able to create or join rooms and play Rock Paper Scissors in real-time.
         </p>
         {user && (
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
             <p className="text-blue-400 text-sm">
-              ✓ You're authenticated and ready to play when this game launches!
+              ✓ You&apos;re authenticated and ready to play when this game launches!
             </p>
           </div>
         )}

@@ -137,7 +137,7 @@ export const joinRoom = async (roomId: string, playerId: string, playerName: str
     updatedAt: serverTimestamp(),
   });
   
-  return { id: roomId, ...roomData, players: newPlayers, status: newStatus };
+  return { ...roomData, id: roomId, players: newPlayers, status: newStatus };
 };
 
 export const leaveRoom = async (roomId: string, playerId: string, closeForEveryone: boolean = false) => {

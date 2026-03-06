@@ -372,7 +372,7 @@ export default function GameRoomPage() {
                       <span className="text-gray-500 text-sm ml-2">({winnerInfo.symbol})</span>
                     </p>
                   ) : (
-                    <p className="text-gray-300">It's a Draw!</p>
+                    <p className="text-gray-300">It&apos;s a Draw!</p>
                   )}
                 </div>
               )}
