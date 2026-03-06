@@ -14,12 +14,22 @@ let app: FirebaseApp | undefined;
 let db: Firestore | undefined;
 
 // Initialize Firebase for server-side use
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
+// Only initialize if all required env vars are present
+const hasRequiredEnvVars = 
+  firebaseConfig.apiKey &&
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId &&
+  firebaseConfig.storageBucket &&
+  firebaseConfig.messagingSenderId &&
+  firebaseConfig.appId;
 
-db = getFirestore(app);
+if (hasRequiredEnvVars) {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApps()[0];
+  }
+  db = getFirestore(app);
+}
 
 export { app, db };
