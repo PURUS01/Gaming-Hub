@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { signupWithEmail } from '@/lib/firebase/auth';
 
 export default function CreateUserForm() {
   const { user: adminUser } = useAuth();
@@ -27,26 +26,29 @@ export default function CreateUserForm() {
     }
 
     try {
-      // Create the new user in Firebase Authentication
-      // Note: This will temporarily sign out the admin and sign in as the new user
-      // After creation, the admin will need to sign in again
-      const userCredential = await signupWithEmail(formData.email, formData.password);
-      
-      setSuccess(`User created successfully! Email: ${userCredential.user.email}`);
-      setFormData({ email: '', password: '' });
-    } catch (err: any) {
-      let errorMessage = 'Failed to create user';
-      if (err.code === 'auth/email-already-in-use') {
-        errorMessage = 'This email is already registered';
-      } else if (err.code === 'auth/invalid-email') {
-        errorMessage = 'Invalid email address';
-      } else if (err.code === 'auth/weak-password') {
-        errorMessage = 'Password is too weak (minimum 6 characters)';
-      } else if (err.message) {
-        errorMessage = err.message;
+      // Create user via API route - this won't affect the current login session
+      const response = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to create user');
+      } else {
+        setSuccess(data.message || `User created successfully! Email: ${formData.email}`);
+        setFormData({ email: '', password: '' });
       }
-      setError(errorMessage);
+    } catch (err: any) {
       console.error('User creation error:', err);
+      setError('Failed to create user. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -117,7 +119,7 @@ export default function CreateUserForm() {
       </div>
 
       <p className="text-gray-500 text-xs mt-4 sm:mt-5 leading-relaxed">
-        Note: After creating a user, you will be signed out and signed in as the new user. Please sign back in to continue managing users.
+        Note: Creating a user will not affect your current login session. You will remain logged in as admin.
       </p>
     </form>
   );
