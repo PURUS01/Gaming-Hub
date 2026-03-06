@@ -21,7 +21,7 @@ export default function ProfilePage() {
 
   return (
     <AuthGate>
-      <div className="min-h-screen bg-gaming-dark">
+      <div className="bg-gaming-dark">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-4xl font-bold text-white mb-8">Profile</h1>
 

@@ -24,7 +24,7 @@ export default function AdminPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gaming-dark">
+      <div className="bg-gaming-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           <AdminLogin onSuccess={handleLoginSuccess} />
         </div>
@@ -33,7 +33,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gaming-dark">
+    <div className="bg-gaming-dark">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Header Section - Mobile Responsive */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
