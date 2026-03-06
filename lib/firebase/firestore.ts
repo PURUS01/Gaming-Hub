@@ -39,7 +39,7 @@ export const ensureFirestoreOnline = async (): Promise<void> => {
   }
 };
 
-export const createRoom = async (roomId: string, gameId: string, hostId: string, hostName: string, hostEmail: string, maxPlayers: number, gameState: any = {}) => {
+export const createRoom = async (roomId: string, gameId: string, hostId: string, hostName: string, hostEmail: string, maxPlayers: number, gameState: any = {}, withComputer: boolean = false) => {
   // Comprehensive validation
   if (!db) {
     console.error('Firestore database is not initialized');
@@ -63,12 +63,35 @@ export const createRoom = async (roomId: string, gameId: string, hostId: string,
   const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
   
   // Ensure players array structure matches Firestore rules exactly
-  const playersArray = [{
+  const playersArray: any[] = [{
     uid: hostId,
     name: hostName,
     email: hostEmail || '',
     joinedAt: new Date().toISOString(),
   }];
+
+  // Add computer player if requested
+  if (withComputer && maxPlayers >= 2) {
+    playersArray.push({
+      uid: 'computer_' + Date.now(),
+      name: 'Computer',
+      email: 'computer@ai.local',
+      joinedAt: new Date().toISOString(),
+      isComputer: true,
+    });
+  }
+  
+  // If computer is added, start game immediately and initialize game state
+  const initialStatus = withComputer && playersArray.length >= maxPlayers ? 'playing' : 'waiting';
+  
+  // Initialize game state for Tic Tac Toe if playing with computer
+  let initialGameState = gameState || {};
+  if (withComputer && gameId === 'online-tic-tac-toe' && initialStatus === 'playing') {
+    initialGameState = {
+      board: Array(9).fill(null),
+      currentTurn: 'X',
+    };
+  }
   
   const roomData = {
     id: roomId,
@@ -76,10 +99,11 @@ export const createRoom = async (roomId: string, gameId: string, hostId: string,
     hostId,
     hostName,
     roomCode,
-    status: 'waiting',
+    status: initialStatus,
     maxPlayers,
     players: playersArray,
-    gameState: gameState || {},
+    gameState: initialGameState,
+    hasComputer: withComputer,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };

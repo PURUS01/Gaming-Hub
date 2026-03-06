@@ -34,7 +34,9 @@ export type GameRoom = {
     email: string;
     joinedAt: string;
     role?: string;
+    isComputer?: boolean; // Flag to identify computer players
   }[];
+  hasComputer?: boolean; // Flag to indicate if room has computer player
   gameState: any;
   winner?: string | null;
   currentTurn?: string;

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getRoom, updateRoom, subscribeToRoom } from '@/lib/firebase/firestore';
-import { checkWinner, isBoardFull, type Board, type Player } from '@/lib/games/ticTacToe';
+import { checkWinner, isBoardFull, getBestMove, type Board, type Player } from '@/lib/games/ticTacToe';
 import { GameRoom } from '@/types';
 import CelebrationAnimation from '@/components/CelebrationAnimation';
 
@@ -25,6 +25,7 @@ export default function OnlineTicTacToeGame({ gameId, roomId }: OnlineTicTacToeG
   const [isResetting, setIsResetting] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [previousWinner, setPreviousWinner] = useState<GameResult>(null);
+  const computerMoveProcessed = useRef(false);
 
   useEffect(() => {
     if (!roomId || !user) return;
@@ -114,7 +115,63 @@ export default function OnlineTicTacToeGame({ gameId, roomId }: OnlineTicTacToeG
       setPreviousWinner(null);
       setShowCelebration(false);
     }
-  }, []);
+  }, [winner, previousWinner]);
+
+  // Handle computer moves
+  useEffect(() => {
+    if (!room || !user || room.status !== 'playing' || winner) return;
+    if (!room.hasComputer) return; // Only for computer games
+    
+    // Check if it's computer's turn
+    const computerPlayer = room.players.find(p => p.isComputer);
+    if (!computerPlayer) return;
+    
+    // Determine computer's symbol
+    const computerIndex = room.players.findIndex(p => p.isComputer);
+    const computerSymbol: Player = computerIndex === 0 ? 'X' : 'O';
+    
+    // Check if it's computer's turn and not already processed
+    if (currentTurn === computerSymbol && playerSymbol !== computerSymbol && !computerMoveProcessed.current) {
+      computerMoveProcessed.current = true;
+      
+      // Delay computer move for better UX
+      setTimeout(async () => {
+        if (!room || !board) return;
+        
+        const bestMoveIndex = getBestMove(board, computerSymbol);
+        if (bestMoveIndex === -1 || board[bestMoveIndex] !== null) return;
+        
+        const newBoard = [...board];
+        newBoard[bestMoveIndex] = computerSymbol;
+        
+        const result = checkWinner(newBoard);
+        const isDraw = !result && isBoardFull(newBoard);
+        const nextTurn = currentTurn === 'X' ? 'O' : 'X';
+        
+        try {
+          await updateRoom(roomId, {
+            gameState: {
+              board: newBoard,
+              currentTurn: nextTurn,
+            },
+            status: result || isDraw ? 'finished' : 'playing',
+            winner: result?.winner || null,
+            updatedAt: new Date().toISOString(),
+          });
+        } catch (err: any) {
+          console.error('Computer move error:', err);
+        } finally {
+          // Reset flag after a delay to allow room update
+          setTimeout(() => {
+            computerMoveProcessed.current = false;
+          }, 1000);
+        }
+      }, 800); // 800ms delay for computer "thinking"
+    } else if (currentTurn !== computerSymbol) {
+      // Reset flag when it's player's turn
+      computerMoveProcessed.current = false;
+    }
+  }, [room, user, currentTurn, board, playerSymbol, winner, roomId]);
 
   const handleCellClick = async (index: number) => {
     if (!room || !user || room.status !== 'playing') return;
@@ -190,7 +247,9 @@ export default function OnlineTicTacToeGame({ gameId, roomId }: OnlineTicTacToeG
 
   const isMyTurn = currentTurn === playerSymbol && !winner;
   const opponent = room.players.find(p => p.uid !== user?.uid);
-  const opponentName = opponent?.name || opponent?.email?.split('@')[0] || 'Opponent';
+  const opponentName = opponent?.isComputer 
+    ? 'Computer' 
+    : (opponent?.name || opponent?.email?.split('@')[0] || 'Opponent');
 
   // Get winner player info
   const getWinnerName = () => {

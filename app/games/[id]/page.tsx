@@ -29,7 +29,7 @@ export default function GameLobbyPage() {
     }
   }, [params.id]);
 
-  const handleCreateRoom = async () => {
+  const handleCreateRoom = async (withComputer: boolean = false) => {
     // Comprehensive validation before attempting to create room
     if (!user) {
       const errorMsg = 'You must be logged in to create a room.';
@@ -66,8 +66,10 @@ export default function GameLobbyPage() {
         hostName,
         maxPlayers: game.maxPlayers,
         userEmail: user.email,
+        withComputer,
       });
       
+      // Create room with or without computer player
       const createdRoom = await createRoom(
         roomId,
         game.id,
@@ -75,17 +77,22 @@ export default function GameLobbyPage() {
         hostName,
         user.email || '',
         game.maxPlayers,
-        {}
+        {},
+        withComputer // Pass computer flag
       );
       
       console.log('Room created successfully:', createdRoom);
       
-      showSuccess(`Room created successfully! Room code: ${createdRoom.roomCode}`, 4000);
-      
-      // Small delay to show toast before navigation
-      setTimeout(() => {
+      if (withComputer) {
+        // Don't show success message for Play button - navigate immediately
         router.push(`/games/${game.id}/room/${roomId}`);
-      }, 500);
+      } else {
+        showSuccess(`Room created successfully! Room code: ${createdRoom.roomCode}`, 4000);
+        // Small delay to show toast before navigation
+        setTimeout(() => {
+          router.push(`/games/${game.id}/room/${roomId}`);
+        }, 500);
+      }
     } catch (err: any) {
       console.error('Error in handleCreateRoom:', err);
       const errorMessage = err.message || 'Failed to create room. Please try again.';
@@ -201,6 +208,23 @@ export default function GameLobbyPage() {
             <p className="text-gray-300 text-xs sm:text-sm">{game.fullDescription}</p>
           </div>
 
+          <div className="mb-4 sm:mb-6">
+            <button
+              onClick={() => handleCreateRoom(true)}
+              disabled={loading}
+              className="w-full bg-gaming-blue hover:bg-gaming-blue/90 text-white font-bold py-3 sm:py-4 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span>Starting...</span>
+                </>
+              ) : (
+                <span>Play</span>
+              )}
+            </button>
+          </div>
+
           <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6">
               <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">Create Room</h3>
@@ -208,7 +232,7 @@ export default function GameLobbyPage() {
                 Create a new room and share the code with friends to play together.
               </p>
               <button
-                onClick={handleCreateRoom}
+                onClick={() => handleCreateRoom(false)}
                 disabled={loading}
                 className="w-full bg-gaming-purple hover:bg-gaming-purple/90 text-white font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >

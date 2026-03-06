@@ -222,13 +222,13 @@ export default function GameRoomPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
             <Link href={`/games/${params.id}`} className="text-gaming-purple hover:underline text-sm sm:text-base">
-              ← Back to lobby
+              ← Back to games
             </Link>
             <button
               onClick={handleLeaveRoom}
               className="px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs sm:text-sm transition-colors w-full sm:w-auto"
             >
-              Leave Room
+              {room?.hasComputer ? 'Exit Game' : 'Leave Room'}
             </button>
           </div>
 
@@ -258,72 +258,86 @@ export default function GameRoomPage() {
             </div>
           )}
 
-          <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6 mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-              <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">{game.title}</h1>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-gray-400 text-xs sm:text-sm">Room Code:</p>
-                  <div className="flex items-center gap-2 bg-gray-800 px-3 py-1.5 rounded-lg">
-                    <span className="text-white font-bold text-sm sm:text-base">{room.roomCode}</span>
-                    <button
-                      onClick={handleCopyRoomCode}
-                      className="p-1.5 hover:bg-gray-700 rounded transition-colors group"
-                      title="Copy room code"
-                    >
-                      {copied ? (
-                        <span className="text-green-400 text-sm">✓</span>
-                      ) : (
-                        <svg 
-                          className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" 
-                          />
-                        </svg>
-                      )}
-                    </button>
+          {!room.hasComputer && (
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <div className="flex-1">
+                  <h1 className="text-xl sm:text-2xl font-bold text-white mb-2">{game.title}</h1>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-gray-400 text-xs sm:text-sm">Room Code:</p>
+                    <div className="flex items-center gap-2 bg-gray-800 px-3 py-1.5 rounded-lg">
+                      <span className="text-white font-bold text-sm sm:text-base">{room.roomCode}</span>
+                      <button
+                        onClick={handleCopyRoomCode}
+                        className="p-1.5 hover:bg-gray-700 rounded transition-colors group"
+                        title="Copy room code"
+                      >
+                        {copied ? (
+                          <span className="text-green-400 text-sm">✓</span>
+                        ) : (
+                          <svg 
+                            className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" 
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
+                <div className="text-left sm:text-right">
+                  <p className="text-gray-400 text-xs sm:text-sm">Status</p>
+                  <p className={`text-white font-semibold capitalize text-sm sm:text-base ${
+                    room.status === 'playing' ? 'text-green-400' :
+                    room.status === 'waiting' ? 'text-yellow-400' :
+                    'text-gray-400'
+                  }`}>
+                    {room.status}
+                  </p>
+                </div>
               </div>
-              <div className="text-left sm:text-right">
-                <p className="text-gray-400 text-xs sm:text-sm">Status</p>
-                <p className={`text-white font-semibold capitalize text-sm sm:text-base ${
-                  room.status === 'playing' ? 'text-green-400' :
-                  room.status === 'waiting' ? 'text-yellow-400' :
-                  'text-gray-400'
-                }`}>
-                  {room.status}
-                </p>
+
+              <div className="border-t border-gray-800 pt-4">
+                <p className="text-gray-400 text-sm mb-2">Players ({room.players.length}/{room.maxPlayers})</p>
+                <div className="flex flex-wrap gap-2">
+                  {room.players.map((player) => (
+                    <div
+                      key={player.uid}
+                      className={`px-3 py-1 rounded-lg text-sm ${
+                        player.uid === user?.uid
+                          ? 'bg-gaming-purple text-white'
+                          : 'bg-gray-800 text-gray-300'
+                      }`}
+                    >
+                      {player.isComputer ? '🤖 ' : ''}{player.name} {player.uid === room.hostId && '(Host)'} {player.isComputer && '(AI)'}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
+          )}
 
-            <div className="border-t border-gray-800 pt-4">
-              <p className="text-gray-400 text-sm mb-2">Players ({room.players.length}/{room.maxPlayers})</p>
-              <div className="flex flex-wrap gap-2">
-                {room.players.map((player) => (
-                  <div
-                    key={player.uid}
-                    className={`px-3 py-1 rounded-lg text-sm ${
-                      player.uid === user?.uid
-                        ? 'bg-gaming-purple text-white'
-                        : 'bg-gray-800 text-gray-300'
-                    }`}
-                  >
-                    {player.name} {player.uid === room.hostId && '(Host)'}
-                  </div>
-                ))}
+          {room.hasComputer && (
+            <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 sm:p-6 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-xl sm:text-2xl font-bold text-white">{game.title}</h1>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400 text-xs sm:text-sm">vs</span>
+                  <span className="text-white font-semibold text-sm sm:text-base">🤖 Computer</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {room.status === 'waiting' && (
+          {room.status === 'waiting' && !room.hasComputer && (
             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 sm:p-6 text-center mb-6">
               <p className="text-yellow-400 font-semibold mb-2 text-sm sm:text-base">Waiting for players...</p>
               <div className="flex items-center justify-center gap-2 flex-wrap">
